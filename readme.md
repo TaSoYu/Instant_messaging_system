@@ -1,0 +1,3 @@
+# Instant_messaging_system
+
+基于golang实现的Socket网络通信系统，适合于Go语言初学者练习
