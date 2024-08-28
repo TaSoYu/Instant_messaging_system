@@ -3,20 +3,29 @@ package main
 import (
 	"fmt"
 	"net"
+	"sync"
 )
 
 type Server struct {
 	//先定义 ip和端口号的属性
 	Ip   string
 	Port int
+	//	map储存在线用户信息
+	OnlineMap map[string]*User
+	//加锁保证进程安全
+	Maplock sync.RWMutex
+	//message管道储存所有需广播的信息
+	Messages chan string
 }
 
 // NewServer 创建一个server对象的接口
 func NewServer(ip string, port int) *Server {
 	//初始化一个变量传回去
 	server := &Server{
-		Ip:   ip,
-		Port: port,
+		Ip:        ip,
+		Port:      port,
+		OnlineMap: make(map[string]*User),
+		Messages:  make(chan string),
 	}
 	return server
 }
@@ -24,6 +33,40 @@ func NewServer(ip string, port int) *Server {
 // Handle 处理连接业务
 func (this *Server) Handle(conn net.Conn) {
 	fmt.Println("与服务器连接成功")
+
+	user := NewUser(conn)
+
+	//用户上线后将其加入map中
+	this.Maplock.Lock()
+	this.OnlineMap[user.Name] = user
+	this.Maplock.Unlock()
+
+	//然后广播该用户已上线
+	this.Broadcast(user, "已上线")
+
+	//此handle先暂时阻塞
+	select {}
+}
+
+// 给予用户，向其他用户广播的接口
+func (this *Server) Broadcast(user *User, msg string) {
+	sendMsg := "[" + user.Addr + "] " + user.Name + " : " + msg
+
+	//msg存储到server的message中
+	this.Messages <- sendMsg
+}
+
+func (this *Server) MessageListen() {
+	for {
+		msg := <-this.Messages
+
+		//一但从msg读到消息，就向所有用户发送
+		this.Maplock.Lock()
+		for _, cli := range this.OnlineMap {
+			cli.C <- msg
+		}
+		this.Maplock.Unlock()
+	}
 }
 
 // Start 启动Server服务的接口
@@ -41,12 +84,14 @@ func (this *Server) Start() {
 
 	if err != nil {
 		// 使用panic抛出异常
-
 		panic(err)
 	}
 
 	//创建成功listener要关闭
 	defer listener.Close()
+
+	//需要一个进程实时监听msg管道
+	go this.MessageListen()
 
 	for {
 		//accept
