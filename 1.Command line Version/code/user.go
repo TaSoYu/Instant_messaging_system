@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net"
 	"strings"
 )
@@ -36,7 +37,10 @@ func (user *User) ListenMessage() {
 	for {
 		msg := <-user.C
 
-		user.conn.Write([]byte(msg + "\n"))
+		_, err := user.conn.Write([]byte(msg + "\n"))
+		if err != nil {
+			fmt.Println("write error:", err)
+		}
 	}
 }
 
@@ -75,7 +79,7 @@ func (user *User) DoMessage(msg string) {
 
 	} else if len(msg) > 7 && msg[:7] == "rename|" {
 		newName := strings.Split(msg, "|")[1]
-		
+
 		//先检测新name是否已经存在
 		_, ok := user.server.OnlineMap[newName]
 		if ok {
