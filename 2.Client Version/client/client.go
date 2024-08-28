@@ -78,6 +78,46 @@ func (client *Client) UpdateName() bool {
 	return true
 }
 
+// 查询在线人数
+func (client *Client) SelectUser() {
+	sendMsg := "who\n"
+
+	_, err := client.conn.Write([]byte(sendMsg))
+	if err != nil {
+		fmt.Println("client.conn.Write err:", err)
+		return
+	}
+}
+
+func (client *Client) PrivateChat() {
+	var remoteUser string
+	var msg string
+
+	fmt.Println("请输入你要私聊对象的用户名，exit退出")
+	fmt.Scanln(&remoteUser)
+
+	for remoteUser != "exit" {
+		fmt.Println("请输入你要私聊的消息内容, exit退出")
+		fmt.Scanln(&msg)
+		for remoteUser != "exit" {
+			if len(msg) != 0 {
+				sendMsg := "to|" + remoteUser + "|" + msg + "\n"
+				_, err := client.conn.Write([]byte(sendMsg))
+				if err != nil {
+					fmt.Println("client.conn.Write err:", err)
+					break
+				}
+			}
+
+			msg = ""
+			fmt.Println("请输入你要私聊的消息内容, exit退出")
+			fmt.Scanln(&msg)
+		}
+		fmt.Println("请输入你要私聊对象的用户名，exit退出")
+		fmt.Scanln(&remoteUser)
+	}
+}
+
 func (client *Client) PublicChat() {
 	//提示用户输入信息
 	var chatMsg string
@@ -150,7 +190,7 @@ func (client *Client) run() {
 
 		case 2:
 			//私聊
-			fmt.Println("请按要求输入信息进行私聊   to|张三|消息内容")
+			client.PrivateChat()
 		case 3:
 			//更新用户名
 			client.UpdateName()
