@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 )
@@ -20,7 +21,7 @@ func NewClient(serverIp string, serverPort int) *Client {
 	}
 
 	//连接server
-	conn, err := net.Dial("tcp", fmt.Sprint("%s:%d", serverIp, serverPort))
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", serverIp, serverPort))
 	if err != nil {
 		fmt.Println("net.Dial err:", err)
 		return nil
@@ -29,13 +30,31 @@ func NewClient(serverIp string, serverPort int) *Client {
 	client.conn = conn
 	//返回对象
 	return client
+}
 
+var serverIp string
+var serverPort int
+
+//   ./client -ip 127.0.0.1 -porn 8888   作为命令行输入
+
+func init() {
+	// 绑定变量   输入变量名   默认值   解释说明
+	flag.StringVar(&serverIp, "ip", "127.0.0.1", "server ip address")
+	flag.IntVar(&serverPort, "port", 8888, "server port")
 }
 
 func main() {
-	client := NewClient("127.0.0.1", 8888)
-	if client != nil {
+
+	flag.Parse()
+
+	client := NewClient(serverIp, serverPort)
+	if client == nil {
 		fmt.Println("-------连接服务器失败")
+		return
 	}
 	fmt.Println("-------连接服务器成功")
+
+	for {
+
+	}
 }
