@@ -78,6 +78,31 @@ func (client *Client) UpdateName() bool {
 	return true
 }
 
+func (client *Client) PublicChat() {
+	//提示用户输入信息
+	var chatMsg string
+
+	fmt.Println("请输入你要公聊的信息内容, 输入exit退出")
+	fmt.Scanln(&chatMsg)
+
+	for chatMsg != "exit" {
+		//发给服务器
+		//检测不为空就发
+		if len(chatMsg) != 0 {
+			sendMsg := chatMsg + "\n"
+			_, err := client.conn.Write([]byte(sendMsg))
+			if err != nil {
+				fmt.Println("client.conn.Write err:", err)
+				break
+			}
+		}
+
+		chatMsg = ""
+		fmt.Println("请输入你要公聊的信息内容, 输入exit退出")
+		fmt.Scanln(&chatMsg)
+	}
+}
+
 // 处理server的回应消息
 func (client *Client) DealResponse() {
 	//一但client有数据，就拷贝到标准输出上，且永久阻塞 运行
@@ -121,7 +146,7 @@ func (client *Client) run() {
 		switch client.flag {
 		case 1:
 			//公聊
-			fmt.Println("请输入你要公聊的信息")
+			client.PublicChat()
 
 		case 2:
 			//私聊
