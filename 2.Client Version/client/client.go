@@ -11,6 +11,8 @@ type Client struct {
 	ServerPort int
 	Name       string
 	conn       net.Conn
+
+	flag int
 }
 
 func NewClient(serverIp string, serverPort int) *Client {
@@ -18,6 +20,7 @@ func NewClient(serverIp string, serverPort int) *Client {
 	client := &Client{
 		ServerIp:   serverIp,
 		ServerPort: serverPort,
+		flag:       1,
 	}
 
 	//连接server
@@ -54,7 +57,45 @@ func main() {
 	}
 	fmt.Println("-------连接服务器成功")
 
-	for {
+	client.run()
+}
 
+func (client *Client) Menu() bool {
+	var flag int
+
+	fmt.Println("1.公聊模式")
+	fmt.Println("2.私聊模式")
+	fmt.Println("3.更新当前用户名")
+	fmt.Println("0.退出")
+
+	fmt.Scanln(&flag)
+
+	if flag >= 0 && flag <= 3 {
+		client.flag = flag
+		return true
+	} else {
+		fmt.Println("请输入正确范围内的数字")
+		return false
+	}
+}
+
+func (client *Client) run() {
+	for client.flag != 0 {
+		for client.Menu() != true {
+			//不返回 true就一直读
+		}
+		//根据flag 处理不同的业务
+		switch client.flag {
+		case 1:
+			//公聊
+			fmt.Println("请输入你要公聊的信息")
+
+		case 2:
+			//私聊
+			fmt.Println("请按要求输入信息进行私聊   to|张三|消息内容")
+		case 3:
+			//更新用户名
+			fmt.Println("请按要求输入信息进行改名   rename|NewName")
+		}
 	}
 }
