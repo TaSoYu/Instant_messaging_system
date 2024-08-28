@@ -66,7 +66,7 @@ func (user *User) Offline() {
 	user.server.Broadcast(user, "下线")
 }
 
-// 用户的广播单独提供一个接口
+// 用户的广播 或 私聊操作提供一个接口
 func (user *User) DoMessage(msg string) {
 
 	if msg == "who" {
@@ -76,6 +76,34 @@ func (user *User) DoMessage(msg string) {
 			user.SendMessage(onlineMsg)
 		}
 		user.server.Maplock.Unlock()
+
+	} else if len(msg) > 4 && msg[:3] == "to|" {
+		//输入格式为 to|张三|消息内容
+
+		//1.获取目标的name
+		remoteName := strings.Split(msg, "|")[1]
+		if remoteName == "" {
+			user.SendMessage("输入格式有误，请使用\"to|张三|你好呀\"的格式.")
+			return
+		}
+
+		//2.根据name获得对方的user对象
+		remoteUser, ok := user.server.OnlineMap[remoteName]
+		if !ok {
+			user.SendMessage("目标用户不存在")
+			return
+		} else if remoteUser == user {
+			user.SendMessage("私聊对象不能为自己")
+			return
+		}
+
+		//3.发送消息
+		content := strings.Split(msg, "|")[2]
+		if content == "" {
+			user.SendMessage("消息不可为空")
+			return
+		}
+		remoteUser.SendMessage(user.Name + "对您说: " + content)
 
 	} else if len(msg) > 7 && msg[:7] == "rename|" {
 		newName := strings.Split(msg, "|")[1]
