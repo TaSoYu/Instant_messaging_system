@@ -61,5 +61,21 @@ func (user *User) Offline() {
 
 // 用户的广播单独提供一个接口
 func (user *User) DoMessage(msg string) {
-	user.server.Broadcast(user, msg)
+
+	if msg == "who" {
+		user.server.Maplock.Lock()
+		for _, cli := range user.server.OnlineMap {
+			onlineMsg := "[" + cli.Addr + "] " + cli.Name + " : 现在线....\n"
+			user.SendMessage(onlineMsg)
+		}
+		user.server.Maplock.Unlock()
+		
+	} else {
+		user.server.Broadcast(user, msg)
+	}
+
+}
+
+func (user *User) SendMessage(msg string) {
+	user.conn.Write([]byte(msg + "\n"))
 }
