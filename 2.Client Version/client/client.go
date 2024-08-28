@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"net"
+	"os"
 )
 
 type Client struct {
@@ -57,7 +59,38 @@ func main() {
 	}
 	fmt.Println("-------连接服务器成功")
 
+	go client.DealResponse()
+
 	client.run()
+}
+
+func (client *Client) UpdateName() bool {
+	fmt.Println("\n请您的新用户名：")
+	fmt.Scanln(&client.Name)
+
+	sendMsg := "rename|" + client.Name
+
+	_, err := client.conn.Write([]byte(sendMsg))
+	if err != nil {
+		fmt.Println("client.conn.Write err:", err)
+		return false
+	}
+	return true
+}
+
+// 处理server的回应消息
+func (client *Client) DealResponse() {
+	//一但client有数据，就拷贝到标准输出上，且永久阻塞 运行
+	io.Copy(os.Stdout, client.conn)
+
+	/*
+		等效于
+		for{
+			buf := make()
+			client.conn.Read(buf)
+			fmt.Printf(buf)
+		}
+	*/
 }
 
 func (client *Client) Menu() bool {
@@ -95,7 +128,8 @@ func (client *Client) run() {
 			fmt.Println("请按要求输入信息进行私聊   to|张三|消息内容")
 		case 3:
 			//更新用户名
-			fmt.Println("请按要求输入信息进行改名   rename|NewName")
+			client.UpdateName()
+
 		}
 	}
 }
